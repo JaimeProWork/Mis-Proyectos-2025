@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner de Puertos Avanzado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .port-open {
+            color: green;
+        }
+        .port-closed {
+            color: red;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .progress {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Escáner de Puertos Avanzado</h1>
+        
+        <div class="form-group">
+            <label for="host">Host o IP:</label>
+            <input type="text" id="host" placeholder="Ej: localhost o 192.168.1.1" value="localhost">
+        </div>
+        
+        <div class="form-group">
+            <label for="start-port">Puerto inicial:</label>
+            <input type="number" id="start-port" min="1" max="65535" value="1">
+        </div>
+        
+        <div class="form-group">
+            <label for="end-port">Puerto final:</label>
+            <input type="number" id="end-port" min="1" max="65535" value="100">
+        </div>
+        
+        <div class="form-group">
+            <label for="timeout">Tiempo de espera (ms):</label>
+            <input type="number" id="timeout" min="100" max="5000" value="500">
+        </div>
+        
+        <button id="scan-btn">Iniciar Escaneo</button>
+        <button id="stop-btn" disabled>Detener Escaneo</button>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scanBtn = document.getElementById('scan-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const hostInput = document.getElementById('host');
+            const startPortInput = document.getElementById('start-port');
+            const endPortInput = document.getElementById('end-port');
+            const timeoutInput = document.getElementById('timeout');
+            const resultsDiv = document.getElementById('results');
+            const progressBar = document.getElementById('progress');
+            
+            let isScanning = false;
+            let abortController = null;
+            
+            scanBtn.addEventListener('click', startScan);
+            stopBtn.addEventListener('click', stopScan);
+            
+            function startScan() {
+                if (isScanning) return;
+                
+                const host = hostInput.value.trim();
+                const startPort = parseInt(startPortInput.value);
+                const endPort = parseInt(endPortInput.value);
+                const timeout = parseInt(timeoutInput.value);
+                
+                if (!host) {
+                    alert('Por favor ingresa un host o dirección IP');
+                    return;
+                }
+                
+                if (startPort > endPort) {
+                    alert('El puerto inicial debe ser menor o igual al puerto final');
+                    return;
+                }
+                
+                if (startPort < 1 || endPort > 65535) {
+                    alert('Los puertos deben estar entre 1 y 65535');
+                    return;
+                }
+                
+                isScanning = true;
+                scanBtn.disabled = true;
+                stopBtn.disabled = false;
+                resultsDiv.innerHTML = '';
+                
+                const totalPorts = endPort - startPort + 1;
+                let scannedPorts = 0;
+                let openPorts = 0;
+                
+                abortController = new AbortController();
+                
+                // Función para escanear un puerto individual
+                async function scanPort(port) {
+                    if (abortController.signal.aborted) return;
+                    
+                    try {
+                        const result = await checkPort(host, port, timeout, abortController.signal);
+                        scannedPorts++;
+                        
+                        if (result.open) {
+                            openPorts++;
+                            resultsDiv.innerHTML += `<p class="port-open">Puerto ${port} está ABIERTO (${result.service || 'Servicio desconocido'})</p>`;
+                        } else {
+                            resultsDiv.innerHTML += `<p class="port-closed">Puerto ${port} está CERRADO</p>`;
+                        }
+                        
+                        // Actualizar barra de progreso
+                        const progress = (scannedPorts / totalPorts) * 100;
+                        progressBar.style.width = `${progress}%`;
+                        
+                        // Si hemos terminado
+                        if (scannedPorts === totalPorts) {
+                            finishScan();
+                            resultsDiv.innerHTML += `<p><strong>Escaneo completado. ${openPorts} puertos abiertos de ${totalPorts} escaneados.</strong></p>`;
+                        }
+                    } catch (error) {
+                        if (error.name !== 'AbortError') {
+                            console.error(`Error escaneando puerto ${port}:`, error);
+                        }
+                    }
+                }
+                
+                // Escanear todos los puertos en el rango
+                for (let port = startPort; port <= endPort; port++) {
+                    setTimeout(() => {
+                        if (!abortController.signal.aborted) {
+                            scanPort(port);
+                        }
+                    }, 0);
+                }
+            }
+            
+            function stopScan() {
+                if (!isScanning) return;
+                
+                abortController.abort();
+                finishScan();
+                resultsDiv.innerHTML += '<p><strong>Escaneo detenido por el usuario.</strong></p>';
+            }
+            
+            function finishScan() {
+                isScanning = false;
+                scanBtn.disabled = false;
+                stopBtn.disabled = true;
+                abortController = null;
+            }
+            
+            // Función para verificar un puerto usando WebSockets (alternativa)
+            async function checkPort(host, port, timeout, signal) {
+                return new Promise((resolve) => {
+                    if (signal.aborted) {
+                        resolve({ open: false });
+                        return;
+                    }
+                    
+                    const socket = new WebSocket(`ws://${host}:${port}`);
+                    
+                    const timer = setTimeout(() => {
+                        socket.close();
+                        resolve({ open: false });
+                    }, timeout);
+                    
+                    socket.onopen = () => {
+                        clearTimeout(timer);
+                        socket.close();
+                        resolve({ 
+                            open: true,
+                            service: getServiceName(port)
+                        });
+                    };
+                    
+                    socket.onerror = () => {
+                        clearTimeout(timer);
+                        resolve({ open: false });
+                    };
+                    
+                    signal.addEventListener('abort', () => {
+                        clearTimeout(timer);
+                        socket.close();
+                        resolve({ open: false });
+                    });
+                });
+            }
+            
+            // Función para obtener el nombre del servicio conocido
+            function getServiceName(port) {
+                const commonPorts = {
+                    20: 'FTP (Data)',
+                    21: 'FTP (Control)',
+                    22: 'SSH',
+                    23: 'Telnet',
+                    25: 'SMTP',
+                    53: 'DNS',
+                    80: 'HTTP',
+                    110: 'POP3',
+                    143: 'IMAP',
+                    443: 'HTTPS',
+                    3306: 'MySQL',
+                    3389: 'RDP',
+                    5432: 'PostgreSQL'
+                };
+                
+                return commonPorts[port] || null;
+            }
+        });
+    </script>
+</body>
+</html>
+<div style="text-align: center;">
+© 2024 JaimeProWork ✅ | https://github.com/JaimeProWork ✅
+</div>
