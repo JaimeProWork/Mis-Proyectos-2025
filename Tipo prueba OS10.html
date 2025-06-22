@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Prueba OS-10 - Guardia de Seguridad</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .test-info {
+            background-color: #eaf2f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-left: 4px solid #3498db;
+            background-color: #f9f9f9;
+        }
+        .options {
+            margin-top: 8px;
+        }
+        label {
+            display: block;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e8f8f5;
+            border-radius: 5px;
+            display: none;
+        }
+        .correct {
+            color: #27ae60;
+        }
+        .incorrect {
+            color: #e74c3c;
+        }
+        #timer {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #3498db;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .test-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .question {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulador Prueba OS-10</h1>
+        <h2>Guardia de Seguridad</h2>
+        
+        <div class="test-info">
+            <p><strong>Instrucciones:</strong> Marca Verdadero (V) o Falso (F) según corresponda. Cada pregunta vale 2 puntos.</p>
+            <p><strong>Tiempo estimado:</strong> 60-90 minutos por prueba</p>
+            <p><strong>Total preguntas:</strong> 50 por prueba</p>
+        </div>
+        
+        <div class="test-selector">
+            <button id="startTest1">Prueba 1 - Conceptos Básicos</button>
+            <button id="startTest2">Prueba 2 - Procedimientos</button>
+            <button id="startTest3">Prueba 3 - Integración</button>
+        </div>
+        
+        <div id="timer">00:00:00</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div id="test1" class="hidden">
+            <h2>PRUEBA N°1 - CONCEPTOS BÁSICOS Y MARCO LEGAL</h2>
+            <div id="questions1"></div>
+        </div>
+        
+        <div id="test2" class="hidden">
+            <h2>PRUEBA N°2 - PROCEDIMIENTOS Y ASPECTOS TÉCNICOS</h2>
+            <div id="questions2"></div>
+        </div>
+        
+        <div id="test3" class="hidden">
+            <h2>PRUEBA N°3 - INTEGRACIÓN DE CONOCIMIENTOS</h2>
+            <div id="questions3"></div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button id="submitTest" class="hidden">Finalizar Prueba</button>
+            <button id="newTest" class="hidden">Hacer otra prueba</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentTest = 0;
+        let startTime;
+        let timerInterval;
+        let userAnswers = [];
+        let correctAnswers = [];
+        
+        // Preguntas para cada prueba
+        const tests = {
+            test1: [
+                { question: "1. La seguridad es la sensación de estar cubiertos de todo riesgo o amenaza.", answer: "V" },
+                { question: "2. Existen 4 tipos de seguridad: Nacional, Pública, Privada y Comercial.", answer: "F" },
+                { question: "3. La Seguridad Privada es complementaria a la Seguridad Pública.", answer: "V" },
+                { question: "4. Para ser Guardia de Seguridad se requiere tener 21 años cumplidos.", answer: "F" },
+                { question: "5. Los Vigilantes Privados pueden portar armas de fuego.", answer: "V" },
+                { question: "6. La autoridad fiscalizadora de la seguridad privada es la Prefectura de Carabineros.", answer: "V" },
+                { question: "7. El curso para Guardia de Seguridad dura 120 horas.", answer: "F" },
+                { question: "8. Los Guardias de Seguridad deben tener seguro de vida de 250 UF.", answer: "F" },
+                { question: "9. Existen 7 tipos de agentes de seguridad privada.", answer: "V" },
+                { question: "10. Existen 5 tipos de empresas de seguridad privada.", answer: "V" },
+                { question: "11. El Decreto Ley 3607 regula a los vigilantes privados.", answer: "V" },
+                { question: "12. La Ley N°19.303 determina entidades que deben contar con sistema de seguridad.", answer: "V" },
+                { question: "13. Los Guardias de Seguridad pueden usar uniforme libre.", answer: "V" },
+                { question: "14. Los Vigilantes Privados deben usar uniforme azulado.", answer: "V" },
+                { question: "15. Para ser Guardia se requiere tener 8° básico aprobado.", answer: "F" },
+                { question: "16. Los tres poderes del Estado son: Ejecutivo, Legislativo y Judicial.", answer: "V" },
+                { question: "17. El poder más importante del Estado es el Ejecutivo.", answer: "F" },
+                { question: "18. El recurso de Amparo se aplica ante una detención ilegal.", answer: "V" },
+                { question: "19. El recurso de Protección se aplica ante amenazas a los derechos constitucionales.", answer: "V" },
+                { question: "20. Un particular puede detener solo en caso de delito flagrante.", answer: "V" },
+                { question: "21. El delito es toda acción u omisión voluntaria penada por la Ley.", answer: "V" },
+                { question: "22. El cuasidelito es toda acción u omisión involuntaria penada por la Ley.", answer: "V" },
+                { question: "23. Los elementos comunes del robo y hurto son: apropiación indebida, sin conocimiento del dueño y fin de lucro.", answer: "V" },
+                { question: "24. La diferencia entre robo y hurto es que el robo se comete con violencia.", answer: "V" },
+                { question: "25. En el robo calificado además se da muerte, se lesiona o se viola a la víctima.", answer: "V" },
+                { question: "26. El hurto calificado se efectúa con abuso de confianza por trabajadores.", answer: "V" },
+                { question: "27. El hurto de uso es apropiarse de algo sin autorización sin devolverlo.", answer: "F" },
+                { question: "28. El hurto hallazgo es encontrar algo y no devolverlo.", answer: "V" },
+                { question: "29. La estafa es apropiarse mediante engaño de un bien mueble o inmueble.", answer: "V" },
+                { question: "30. La legítima defensa es la reacción necesaria ante una agresión ilegítima.", answer: "V" },
+                { question: "31. Para aplicar legítima defensa debe existir agresión ilegítima, actual y no provocada.", answer: "V" },
+                { question: "32. La legítima defensa privilegiada se aplica durante el día en la empresa.", answer: "F" },
+                { question: "33. Una guía de entrega de detenido debe hacerse en duplicado.", answer: "V" },
+                { question: "34. El sitio del suceso abierto debe ser aislado.", answer: "V" },
+                { question: "35. El sitio del suceso cerrado debe ser clausurado.", answer: "V" },
+                { question: "36. El retrato hablado incluye características generales, específicas y variables.", answer: "V" },
+                { question: "37. Las rondas se caracterizan por su movilidad.", answer: "V" },
+                { question: "38. Una instalación se divide en área y recinto.", answer: "V" },
+                { question: "39. Existen 5 tipos de barreras de seguridad.", answer: "V" },
+                { question: "40. El Guardia debe proteger personas y bienes, siendo más importante su propia vida.", answer: "V" },
+                { question: "41. Existen 3 tipos de artefactos explosivos según su forma.", answer: "V" },
+                { question: "42. Ante artefactos explosivos se debe fijar, aislar y no tocar nada.", answer: "V" },
+                { question: "43. La evacuación es el traslado ordenado hacia una zona de seguridad.", answer: "V" },
+                { question: "44. La Directiva de Funcionamiento la confeccionan las empresas con Guardias.", answer: "V" },
+                { question: "45. El Estudio de Seguridad es para Vigilantes Privados.", answer: "V" },
+                { question: "46. Las credenciales de Guardias de Seguridad son de color blanco.", answer: "V" },
+                { question: "47. El porte ilegal de armas es portar un arma en vía pública sin autorización.", answer: "V" },
+                { question: "48. La tenencia ilegal de armas es tener un arma no inscrita.", answer: "V" },
+                { question: "49. En un supermercado, el guardia puede detener a quien consuma antes de pagar.", answer: "F" },
+                { question: "50. La misión de Carabineros es garantizar el orden y seguridad pública.", answer: "V" }
+            ],
+            test2: [
+                { question: "1. El escalamiento es ingresar por una vía no destinada al efecto.", answer: "V" },
+                { question: "2. La ronda fija tiene hora y trayecto fijo.", answer: "V" },
+                { question: "3. La ronda móvil se hace a cualquier hora y en cualquier trayecto.", answer: "V" },
+                { question: "4. Las radios se clasifican en HF, UHF y VHF.", answer: "V" },
+                { question: "5. Una ley imperativa ordena hacer algo.", answer: "V" },
+                { question: "6. Una ley prohibitiva prohíbe hacer algo.", answer: "V" },
+                { question: "7. Una ley permisiva permite hacer algo.", answer: "V" },
+                { question: "8. La calumnia es imputar falsamente un delito a una persona.", answer: "V" },
+                { question: "9. La injuria es una ofensa que atenta contra la dignidad.", answer: "V" },
+                { question: "10. El contrato de trabajo debe ser por escrito en dos ejemplares.", answer: "V" },
+                { question: "11. El contrato debe extenderse dentro de 15 días de incorporar al trabajador.", answer: "V" },
+                { question: "12. Arma es toda máquina o instrumento tomado con intención de dañar.", answer: "V" },
+                { question: "13. El triángulo del fuego se compone de temperatura, oxígeno y combustible.", answer: "V" },
+                { question: "14. Los factores de riesgo en asalto son: sorpresa, cantidad de delincuentes y armamento.", answer: "V" },
+                { question: "15. Las agujas de extintores en estado normal deben indicar color verde.", answer: "V" },
+                { question: "16. Los métodos de extinción incluyen sofocación, aislamiento y enfriamiento.", answer: "V" },
+                { question: "17. Los daños físicos del guardia en servicio se consideran actos del servicio.", answer: "V" },
+                { question: "18. El riesgo es la contingencia de daños de diferentes fuentes.", answer: "V" },
+                { question: "19. La finalidad de una antena es propagar la señal de radiofrecuencia.", answer: "V" },
+                { question: "20. Las puertas y ventanas utilizan sistema de contacto magnético.", answer: "V" },
+                { question: "21. El guardia debe observar actitudes correctas solo con sus superiores.", answer: "F" },
+                { question: "22. El derecho civil estudia contratos entre personas y empresas.", answer: "V" },
+                { question: "23. El derecho administrativo estudia relaciones entre Estado y personas.", answer: "V" },
+                { question: "24. El derecho constitucional norma el ordenamiento fundamental.", answer: "V" },
+                { question: "25. El Juzgado del Crimen condena hasta cárcel por delitos.", answer: "V" },
+                { question: "26. El Juzgado Civil maneja contratos privados y documentos comerciales.", answer: "V" },
+                { question: "27. El Juzgado de Menores regula derechos de menores.", answer: "V" },
+                { question: "28. La libertad provisional se otorga a detenidos en proceso sin condena.", answer: "V" },
+                { question: "29. La libertad condicional se otorga a condenados según antecedentes.", answer: "V" },
+                { question: "30. A menores de 14 años se les aplican medidas preventivas.", answer: "V" },
+                { question: "31. Los decretos son emitidos por el Parlamento.", answer: "F" },
+                { question: "32. Los D.F.L. son requeridos por el Parlamento al Presidente.", answer: "V" },
+                { question: "33. Las condenas por cuasidelito siempre son menores que por delito.", answer: "V" },
+                { question: "34. El secuestro es el traslado o retención sin consentimiento.", answer: "V" },
+                { question: "35. Los roles de Carabineros incluyen rol preventivo y educativo.", answer: "V" },
+                { question: "36. Las personas responsables de delito son: autor, cómplice y encubridor.", answer: "V" },
+                { question: "37. Los eximentes de responsabilidad incluyen ser loco o demente.", answer: "V" },
+                { question: "38. Tener antecedentes penales es una agravante.", answer: "V" },
+                { question: "39. No tener antecedentes penales es una atenuante.", answer: "V" },
+                { question: "40. Los menores de 14 años son eximentes de responsabilidad.", answer: "V" },
+                { question: "41. Actuar con alevosía es una agravante.", answer: "V" },
+                { question: "42. Impedir ulteriores consecuencias es una atenuante.", answer: "V" },
+                { question: "43. La conducta anterior es considerada atenuante.", answer: "V" },
+                { question: "44. Hacer algo por recompensa es agravante.", answer: "V" },
+                { question: "45. El ensañamiento es considerado agravante.", answer: "V" },
+                { question: "46. SUBTEL autoriza el uso de radiocomunicaciones.", answer: "V" },
+                { question: "47. La Prefectura autoriza uniformes y armamento especial.", answer: "V" },
+                { question: "48. Carabineros fiscaliza la Ley de Control de Armas N°17.798.", answer: "V" },
+                { question: "49. Los ex-funcionarios de Carabineros con más de 30 años están exentos del curso.", answer: "F" },
+                { question: "50. Actualmente se requiere 4° medio para ser Guardia de Seguridad.", answer: "V" }
+            ],
+            test3: [
+                { question: "1. La función de la seguridad es proteger personas y bienes.", answer: "V" },
+                { question: "2. El objetivo de la seguridad es que las actividades se desarrollen normalmente.", answer: "V" },
+                { question: "3. Las FF.AA. ejercen la Seguridad Nacional.", answer: "V" },
+                { question: "4. Las FF.OO. ejercen la Seguridad Pública.", answer: "V" },
+                { question: "5. Los Guardias de Seguridad deben cumplir idoneidad cívica, moral, de salud y profesional.", answer: "V" },
+                { question: "6. Los Vigilantes Privados requieren salud física y mental.", answer: "V" },
+                { question: "7. Los Guardias solo requieren salud física.", answer: "V" },
+                { question: "8. El seguro de vida para Guardias es de 75 UTM.", answer: "V" },
+                { question: "9. Los Vigilantes requieren 250 UF de seguro de vida.", answer: "V" },
+                { question: "10. Los Vigilantes deben tener situación militar cumplida.", answer: "V" },
+                { question: "11. Los Guardias deben tener situación militar al día.", answer: "V" },
+                { question: "12. Se puede privar de libertad por orden de tribunales.", answer: "V" },
+                { question: "13. Se puede privar de libertad por orden de autoridad o policía.", answer: "V" },
+                { question: "14. Se puede privar de libertad en delito flagrante.", answer: "V" },
+                { question: "15. Los tipos de delito son: frustrado, consumado y tentativa.", answer: "V" },
+                { question: "16. Los delitos se clasifican en: crímenes, simples delitos y faltas.", answer: "V" },
+                { question: "17. El hurto falta es apropiación hasta ½ UTM.", answer: "V" },
+                { question: "18. Las lesiones son daños a la integridad física o psíquica.", answer: "V" },
+                { question: "19. El homicidio es muerte ilegal causada por otra persona.", answer: "V" },
+                { question: "20. Para legítima defensa no debe existir policía disponible.", answer: "V" },
+                { question: "21. El medio empleado en legítima defensa debe ser proporcional.", answer: "V" },
+                { question: "22. La legítima defensa se clasifica en: propia, de parientes y extraños.", answer: "V" },
+                { question: "23. La legítima defensa privilegiada se aplica durante la noche en la propiedad.", answer: "V" },
+                { question: "24. También se aplica cuando se rechaza un escalamiento.", answer: "V" },
+                { question: "25. El sitio mixto debe ser aislado y clausurado.", answer: "V" },
+                { question: "26. Las características generales del retrato hablado incluyen sexo y edad.", answer: "V" },
+                { question: "27. Las características específicas incluyen cara, pelo y ojos.", answer: "V" },
+                { question: "28. Las características variables incluyen vestimentas y especies.", answer: "V" },
+                { question: "29. La ronda mixta combina elementos fijos y móviles.", answer: "V" },
+                { question: "30. El recinto es el lugar demarcado y cerrado.", answer: "V" },
+                { question: "31. El área está fuera del recinto pero dentro de la instalación.", answer: "V" },
+                { question: "32. Las barreras humanas incluyen guardias y vigilantes.", answer: "V" },
+                { question: "33. Las barreras artificiales incluyen murallas y alambradas.", answer: "V" },
+                { question: "34. Las barreras naturales incluyen riachuelos y cerros.", answer: "V" },
+                { question: "35. Las barreras animales incluyen perros y gansos.", answer: "V" },
+                { question: "36. Las barreras electrónicas incluyen sistemas de iluminación.", answer: "V" },
+                { question: "37. Los artefactos explosivos de tiempo explotan en momento programado.", answer: "V" },
+                { question: "38. Los de control remoto se activan a distancia.", answer: "V" },
+                { question: "39. Los de presión explotan al aplicar peso.", answer: "V" },
+                { question: "40. Los de alivio de presión explotan al quitar peso.", answer: "V" },
+                { question: "41. Los artefactos incendiarios buscan provocar fuego.", answer: "V" },
+                { question: "42. Los demoledores buscan destruir estructuras.", answer: "V" },
+                { question: "43. Los de ruido buscan causar pánico.", answer: "V" },
+                { question: "44. Ante explosivos se debe evacuar la zona.", answer: "V" },
+                { question: "45. Se deben cortar los servicios de emergencia.", answer: "V" },
+                { question: "46. Las credenciales de Vigilantes son amarillas, verdes o azules.", answer: "V" },
+                { question: "47. El guardia debe conocer teléfonos de emergencia de la instalación.", answer: "V" },
+                { question: "48. Debe conocer patentes de vehículos que ingresan normalmente.", answer: "V" },
+                { question: "49. Debe conocer la ubicación permanente del supervisor.", answer: "V" },
+                { question: "50. Los D.S. corresponden a materias administrativas o reglamentos.", answer: "V" }
+            ]
+        };
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('startTest1').addEventListener('click', function() { startTest(1); });
+            document.getElementById('startTest2').addEventListener('click', function() { startTest(2); });
+            document.getElementById('startTest3').addEventListener('click', function() { startTest(3); });
+            document.getElementById('submitTest').addEventListener('click', submitTest);
+            document.getElementById('newTest').addEventListener('click', resetTest);
+        });
+        
+        // Función para iniciar una prueba
+        function startTest(testNumber) {
+            currentTest = testNumber;
+            userAnswers = [];
+            correctAnswers = [];
+            
+            // Ocultar todos los tests y mostrar solo el seleccionado
+            document.getElementById('test1').classList.add('hidden');
+            document.getElementById('test2').classList.add('hidden');
+            document.getElementById('test3').classList.add('hidden');
+            document.getElementById('test' + testNumber).classList.remove('hidden');
+            
+            // Ocultar selector de pruebas y mostrar botones de control
+            document.querySelector('.test-selector').classList.add('hidden');
+            document.getElementById('submitTest').classList.remove('hidden');
+            document.getElementById('newTest').classList.add('hidden');
+            document.getElementById('results').style.display = 'none';
+            
+            // Cargar preguntas
+            const questionsContainer = document.getElementById('questions' + testNumber);
+            questionsContainer.innerHTML = '';
+            
+            const testKey = 'test' + testNumber;
+            tests[testKey].forEach((q, index) => {
+                correctAnswers.push(q.answer);
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <div>${q.question}</div>
+                    <div class="options">
+                        <label><input type="radio" name="q${index}" value="V"> Verdadero</label>
+                        <label><input type="radio" name="q${index}" value="F"> Falso</label>
+                    </div>
+                `;
+                questionsContainer.appendChild(questionDiv);
+            });
+            
+            // Iniciar temporizador
+            startTime = new Date();
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            // Actualizar barra de progreso
+            updateProgressBar();
+        }
+        
+        // Actualizar temporizador
+        function updateTimer() {
+            const now = new Date();
+            const elapsed = new Date(now - startTime);
+            const hours = String(elapsed.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsed.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsed.getUTCSeconds()).padStart(2, '0');
+            document.getElementById('timer').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        // Actualizar barra de progreso
+        function updateProgressBar() {
+            const testKey = 'test' + currentTest;
+            const totalQuestions = tests[testKey].length;
+            const answered = userAnswers.filter(a => a !== undefined).length;
+            const progress = (answered / totalQuestions) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+        
+        // Enviar prueba para corrección
+        function submitTest() {
+            clearInterval(timerInterval);
+            
+            // Recoger respuestas del usuario
+            const testKey = 'test' + currentTest;
+            for (let i = 0; i < tests[testKey].length; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                userAnswers[i] = selected ? selected.value : undefined;
+            }
+            
+            // Calcular puntaje
+            let score = 0;
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let unansweredCount = 0;
+            
+            const resultsHTML = [];
+            resultsHTML.push('<h3>Resultados de la Prueba</h3>');
+            
+            for (let i = 0; i < correctAnswers.length; i++) {
+                if (userAnswers[i] === undefined) {
+                    unansweredCount++;
+                    resultsHTML.push(`<p><strong>Pregunta ${i+1}:</strong> <span class="incorrect">No respondida</span> - Respuesta correcta: ${correctAnswers[i]}</p>`);
+                } else if (userAnswers[i] === correctAnswers[i]) {
+                    correctCount++;
+                    score += 2;
+                    resultsHTML.push(`<p><strong>Pregunta ${i+1}:</strong> <span class="correct">Correcta</span></p>`);
+                } else {
+                    incorrectCount++;
+                    resultsHTML.push(`<p><strong>Pregunta ${i+1}:</strong> <span class="incorrect">Incorrecta</span> (Tu respuesta: ${userAnswers[i]}) - Respuesta correcta: ${correctAnswers[i]}</p>`);
+                }
+            }
+            
+            // Mostrar resumen
+            const percentage = Math.round((correctCount / correctAnswers.length) * 100);
+            resultsHTML.unshift(`
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3>Resumen</h3>
+                    <p><strong>Puntaje:</strong> ${score}/100 puntos</p>
+                    <p><strong>Correctas:</strong> ${correctCount} (${percentage}%)</p>
+                    <p><strong>Incorrectas:</strong> ${incorrectCount}</p>
+                    <p><strong>No respondidas:</strong> ${unansweredCount}</p>
+                    <p><strong>Tiempo empleado:</strong> ${document.getElementById('timer').textContent}</p>
+                </div>
+            `);
+            
+            document.getElementById('results').innerHTML = resultsHTML.join('');
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('submitTest').classList.add('hidden');
+            document.getElementById('newTest').classList.remove('hidden');
+            
+            // Deshabilitar todas las opciones
+            const allInputs = document.querySelectorAll('input[type="radio"]');
+            allInputs.forEach(input => {
+                input.disabled = true;
+            });
+        }
+        
+        // Reiniciar para nueva prueba
+        function resetTest() {
+            document.getElementById('results').style.display = 'none';
+            document.querySelector('.test-selector').classList.remove('hidden');
+            document.getElementById('newTest').classList.add('hidden');
+            document.getElementById('submitTest').classList.add('hidden');
+            document.getElementById('test1').classList.add('hidden');
+            document.getElementById('test2').classList.add('hidden');
+            document.getElementById('test3').classList.add('hidden');
+            document.getElementById('timer').textContent = '00:00:00';
+            document.getElementById('progressBar').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
+
+<div style="text-align: center;">
+© 2024 JaimeProWork ✅ | https://github.com/JaimeProWork ✅
+</div>
+ 
