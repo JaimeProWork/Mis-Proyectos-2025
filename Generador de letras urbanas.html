@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Letras Urbanas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .music-icon {
+            font-size: 2.5rem;
+            color: #ffd700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .select-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        select option {
+            background: #333;
+            color: white;
+        }
+
+        .genre-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid transparent;
+        }
+
+        .badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .badge.active {
+            border-color: white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .badge.reggaeton { background: #e53e3e; }
+        .badge.trap { background: #805ad5; }
+        .badge.cumbia { background: #ecc94b; color: #333; }
+        .badge.dancehall { background: #38a169; }
+        .badge.urbano { background: #3182ce; }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .lyrics-container {
+            position: relative;
+        }
+
+        .lyrics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .lyrics-area {
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        .placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .placeholder .icon {
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .genre-badges {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="music-icon">🎵</span>
+                Generador de Letras Urbanas
+                <span class="music-icon">🎵</span>
+            </h1>
+            <p>Crea letras originales mezclando español latino con inglés para diferentes géneros urbanos</p>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>
+                    <span>🎲</span>
+                    Configuración
+                </h2>
+                
+                <div class="form-group">
+                    <label for="genre-select">Selecciona el género musical</label>
+                    <div class="select-container">
+                        <select id="genre-select">
+                            <option value="">Elige un género...</option>
+                            <option value="reggaeton">🔥 Reggaetón</option>
+                            <option value="trap">💜 Trap</option>
+                            <option value="cumbia">🌟 Cumbia</option>
+                            <option value="dancehall">🌿 Dancehall</option>
+                            <option value="urbano">🎤 Urbano Mix</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="genre-badges">
+                    <div class="badge reggaeton" data-genre="reggaeton">Reggaetón</div>
+                    <div class="badge trap" data-genre="trap">Trap</div>
+                    <div class="badge cumbia" data-genre="cumbia">Cumbia</div>
+                    <div class="badge dancehall" data-genre="dancehall">Dancehall</div>
+                    <div class="badge urbano" data-genre="urbano">Urbano Mix</div>
+                </div>
+
+                <button class="generate-btn" id="generate-btn">
+                    <span>🎵</span>
+                    Generar Letras
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="lyrics-header">
+                    <h2>Letras Generadas</h2>
+                    <div class="action-buttons" id="action-buttons" style="display: none;">
+                        <button class="action-btn" id="copy-btn">
+                            <span>📋</span>
+                            Copiar
+                        </button>
+                        <button class="action-btn" id="download-btn">
+                            <span>💾</span>
+                            Descargar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="lyrics-container">
+                    <textarea 
+                        id="lyrics-area" 
+                        class="lyrics-area" 
+                        placeholder="Aquí aparecerán las letras generadas..."
+                        style="display: none;"
+                    ></textarea>
+                    
+                    <div class="placeholder" id="placeholder">
+                        <div class="icon">🎤</div>
+                        <p>Selecciona un género y genera tus letras</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">¡Mezcla perfecta de español e inglés!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎵 Todas las letras son generadas de forma original • Mezcla auténtica de culturas urbanas 🎵</p>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const genres = {
+            reggaeton: {
+                name: "Reggaetón",
+                vocab: {
+                    intro: ["Yeh yeh", "Dale que vamo'", "Esto es pa' la disco", "Suena el perreo", "Llegó tu papi"],
+                    verbs: ["perrear", "bailar", "gozar", "vacilar", "sandunguear", "frontear", "janguear", "rumbear"],
+                    nouns: ["bellaqueo", "perreo", "sandungueo", "party", "disco", "barrio", "calle", "nena", "mami", "baby"],
+                    adjectives: ["brutal", "salvaje", "duro", "intenso", "caliente", "fresh", "cool", "real"],
+                    phrases: ["hasta abajo", "sin miedo", "toda la noche", "en la disco", "con actitud", "pura candela"],
+                    english: ["let's go", "party hard", "all night", "turn up", "get down", "so hot", "my baby", "come on"]
+                }
+            },
+            trap: {
+                name: "Trap",
+                vocab: {
+                    intro: ["Yeah", "Ey ey", "Real hasta la muerte", "Trap money", "En la calle"],
+                    verbs: ["trapear", "facturar", "brillar", "hustlear", "coronar", "dominar", "elevar", "conquistar"],
+                    nouns: ["money", "cash", "flow", "street", "game", "hustle", "crown", "empire", "success", "grind"],
+                    adjectives: ["real", "hardcore", "savage", "boss", "legendary", "unstoppable", "cold", "fire"],
+                    phrases: ["desde abajo", "pa' la cima", "sin parar", "always grinding", "making moves", "stay focused"],
+                    english: ["money talks", "hustle hard", "stay real", "get that bag", "level up", "no cap", "straight up"]
+                }
+            },
+            cumbia: {
+                name: "Cumbia",
+                vocab: {
+                    intro: ["¡Ay cumbia!", "Que suene la cumbia", "Pa' bailar", "Con sabor", "Ritmo sabroso"],
+                    verbs: ["bailar", "gozar", "disfrutar", "celebrar", "festejar", "mover", "sentir", "vivir"],
+                    nouns: ["cumbia", "fiesta", "alegría", "corazón", "amor", "vida", "pueblo", "tradición", "sabor"],
+                    adjectives: ["sabroso", "alegre", "bonito", "dulce", "rico", "suave", "tropical", "festivo"],
+                    phrases: ["con el corazón", "pa' toda la gente", "que rico suena", "pura alegría", "tradición latina"],
+                    english: ["feel the rhythm", "dance with me", "so sweet", "good vibes", "latin soul"]
+                }
+            },
+            dancehall: {
+                name: "Dancehall",
+                vocab: {
+                    intro: ["Selecta!", "Big up", "Pon di riddim", "Gyal dem", "Badman ting"],
+                    verbs: ["wine", "bubble", "dance", "move", "shake", "jump", "party", "celebrate"],
+                    nouns: ["gyal", "badman", "riddim", "bashment", "party", "vibes", "energy", "fire", "heat"],
+                    adjectives: ["wicked", "mad", "crazy", "hot", "wild", "sweet", "nice", "proper"],
+                    phrases: ["pon di floor", "all night long", "big up yourself", "pure vibes", "mad energy"],
+                    english: ["turn it up", "feel the beat", "dance floor", "good vibes", "party time", "so nice"]
+                }
+            },
+            urbano: {
+                name: "Urbano Mix",
+                vocab: {
+                    intro: ["Yo", "Check it", "Urbano style", "En la zona", "Puro flow"],
+                    verbs: ["fluir", "rapear", "improvisar", "crear", "expresar", "conectar", "inspirar", "evolucionar"],
+                    nouns: ["flow", "beat", "rhyme", "style", "culture", "street", "music", "passion", "art", "soul"],
+                    adjectives: ["auténtico", "original", "creativo", "único", "poderoso", "fresh", "smooth", "deep"],
+                    phrases: ["con estilo", "puro talento", "desde el alma", "urban culture", "musical fusion"],
+                    english: ["keep it real", "express yourself", "urban style", "feel the music", "pure talent"]
+                }
+            }
+        };
+
+        let selectedGenre = '';
+
+        // Elementos del DOM
+        const genreSelect = document.getElementById('genre-select');
+        const generateBtn = document.getElementById('generate-btn');
+        const lyricsArea = document.getElementById('lyrics-area');
+        const placeholder = document.getElementById('placeholder');
+        const actionButtons = document.getElementById('action-buttons');
+        const copyBtn = document.getElementById('copy-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const toast = document.getElementById('toast');
+        const badges = document.querySelectorAll('.badge');
+
+        // Funciones utilitarias
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.className = `toast ${isError ? 'error' : ''} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function generateVerse(vocab) {
+            const structures = [
+                () => `${getRandomElement(vocab.intro)}, ${getRandomElement(vocab.phrases)}
+${getRandomElement(vocab.verbs)} ${getRandomElement(vocab.adjectives)}, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.nouns)} en la mente, ${getRandomElement(vocab.phrases)}
+${getRandomElement(vocab.adjectives)} como siempre, ${getRandomElement(vocab.english)}`,
+
+                () => `En la ${getRandomElement(vocab.nouns)}, yo ${getRandomElement(vocab.verbs)}
+${getRandomElement(vocab.adjectives)} y ${getRandomElement(vocab.adjectives)}, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.phrases)}, sin parar
+${getRandomElement(vocab.intro)}, let's go far`,
+
+                () => `${getRandomElement(vocab.english)}, ${getRandomElement(vocab.phrases)}
+Siempre ${getRandomElement(vocab.adjectives)}, nunca fake
+${getRandomElement(vocab.verbs)} con estilo, ${getRandomElement(vocab.nouns)} real
+${getRandomElement(vocab.english)}, that's the deal`,
+
+                () => `Yo ${getRandomElement(vocab.verbs)} ${getRandomElement(vocab.adjectives)}
+${getRandomElement(vocab.phrases)}, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.nouns)} en el aire, pura energía
+${getRandomElement(vocab.adjectives)} toda la vida, ${getRandomElement(vocab.english)} every day`
+            ];
+
+            return getRandomElement(structures)();
+        }
+
+        function generateChorus(vocab) {
+            const choruses = [
+                () => `${getRandomElement(vocab.intro)}, ${getRandomElement(vocab.phrases)}
+${getRandomElement(vocab.english)}, ${getRandomElement(vocab.adjectives)} siempre
+${getRandomElement(vocab.nouns)} y ${getRandomElement(vocab.nouns)}, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.phrases)}, para siempre`,
+
+                () => `${getRandomElement(vocab.verbs)} ${getRandomElement(vocab.adjectives)}, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.phrases)}, sin límites
+${getRandomElement(vocab.adjectives)} como el fuego, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.intro)}, always winning`,
+
+                () => `${getRandomElement(vocab.english)}, ${getRandomElement(vocab.phrases)}
+${getRandomElement(vocab.adjectives)} en el game, ${getRandomElement(vocab.nouns)} real
+${getRandomElement(vocab.verbs)} con pasión, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.phrases)}, that's how I feel`
+            ];
+
+            return getRandomElement(choruses)();
+        }
+
+        function generateLyrics() {
+            if (!selectedGenre) {
+                showToast('Selecciona un género musical', true);
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<div class="loading"></div> Generando letras...';
+
+            setTimeout(() => {
+                const genre = genres[selectedGenre];
+                const vocab = genre.vocab;
+
+                const verse1 = generateVerse(vocab);
+                const chorus = generateChorus(vocab);
+                const verse2 = generateVerse(vocab);
+                const bridge = `${getRandomElement(vocab.english)}, ${getRandomElement(vocab.phrases)}
+${getRandomElement(vocab.adjectives)} forever, ${getRandomElement(vocab.nouns)} en el corazón
+${getRandomElement(vocab.verbs)} sin miedo, ${getRandomElement(vocab.english)}
+${getRandomElement(vocab.phrases)}, pure emotion`;
+
+                const fullLyrics = `[Verso 1]
+${verse1}
+
+[Coro]
+${chorus}
+
+[Verso 2]
+${verse2}
+
+[Coro]
+${chorus}
+
+[Puente]
+${bridge}
+
+[Coro Final]
+${chorus}
+${getRandomElement(vocab.intro)}, ${getRandomElement(vocab.english)}!`;
+
+                lyricsArea.value = fullLyrics;
+                placeholder.style.display = 'none';
+                lyricsArea.style.display = 'block';
+                actionButtons.style.display = 'flex';
+
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span>🎵</span> Generar Letras';
+
+                showToast('¡Letras generadas exitosamente!');
+            }, 1500);
+        }
+
+        function copyToClipboard() {
+            lyricsArea.select();
+            document.execCommand('copy');
+            showToast('¡Letras copiadas al portapapeles!');
+        }
+
+        function downloadLyrics() {
+            const element = document.createElement('a');
+            const file = new Blob([lyricsArea.value], { type: 'text/plain' });
+            element.href = URL.createObjectURL(file);
+            element.download = `letra-${selectedGenre}-${Date.now()}.txt`;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            showToast('¡Letras descargadas!');
+        }
+
+        function selectGenre(genre) {
+            selectedGenre = genre;
+            genreSelect.value = genre;
+            
+            badges.forEach(badge => {
+                badge.classList.remove('active');
+                if (badge.dataset.genre === genre) {
+                    badge.classList.add('active');
+                }
+            });
+        }
+
+        // Event listeners
+        genreSelect.addEventListener('change', (e) => {
+            selectGenre(e.target.value);
+        });
+
+        badges.forEach(badge => {
+            badge.addEventListener('click', () => {
+                selectGenre(badge.dataset.genre);
+            });
+        });
+
+        generateBtn.addEventListener('click', generateLyrics);
+        copyBtn.addEventListener('click', copyToClipboard);
+        downloadBtn.addEventListener('click', downloadLyrics);
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎵 Generador de Letras Urbanas cargado exitosamente!');
+        });
+    </script>
+</body>
+</html>
+
+<div style="text-align: center;">
+© 2024 JaimeProWork ✅ | https://github.com/JaimeProWork ✅
+</div>
